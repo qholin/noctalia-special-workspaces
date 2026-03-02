@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
 import qs.Commons
@@ -25,9 +26,26 @@ Item {
     readonly property string expandDirection: cfg.expandDirection ?? defaults.expandDirection
     readonly property bool isVertical: expandDirection === "up" || expandDirection === "down"
 
+    // Primary button settings
+    readonly property bool priShowPill: cfg.primaryShowPill ?? defaults.primaryShowPill
+    readonly property string priSymbolColor: cfg.primarySymbolColor ?? defaults.primarySymbolColor
+    readonly property string priPillColor: cfg.primaryPillColor ?? defaults.primaryPillColor
+    readonly property real primarySize: cfg.primarySize ?? defaults.primarySize
+
+    // Secondary button settings
+    readonly property bool secShowPill: cfg.secondaryShowPill ?? defaults.secondaryShowPill
+    readonly property string secSymbolColor: cfg.secondarySymbolColor ?? defaults.secondarySymbolColor
+    readonly property string secPillColor: cfg.secondaryPillColor ?? defaults.secondaryPillColor
+    readonly property real secondarySize: cfg.secondarySize ?? defaults.secondarySize
+
+    readonly property real borderRadius: cfg.borderRadius ?? defaults.borderRadius
+    readonly property string focusBorderColor: cfg.focusBorderColor ?? defaults.focusBorderColor
+
     readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screen?.name)
-    readonly property real pillSize: capsuleHeight * 0.90
-    readonly property real iconSize: Style.toOdd(pillSize * 0.48)
+    readonly property real mainPillSize: Math.round(capsuleHeight * primarySize / 2) * 2
+    readonly property real secPillSize: Math.round(capsuleHeight * secondarySize / 2) * 2
+    readonly property real mainIconSize: Style.toOdd(mainPillSize * 0.55)
+    readonly property real secIconSize: Style.toOdd(secPillSize * 0.55)
     readonly property real pillSpacing: Style.marginXS
 
     readonly property var configuredWorkspaces: {
@@ -98,6 +116,7 @@ Item {
     }
 
     Component.onCompleted: {
+        Logger.i("SpecialWorkspaces", "Widget loaded");
         if (CompositorService.isHyprland) {
             updateActiveWorkspaces();
             try {
@@ -111,22 +130,12 @@ Item {
 
     // --- Sizing ---
 
-    readonly property int totalPills: expanded ? 1 + configuredWorkspaces.length : 1
+    readonly property int totalSecPills: expanded ? configuredWorkspaces.length : 0
 
-    readonly property real fullSize: pillSize * totalPills + pillSpacing * Math.max(0, totalPills - 1)
+    readonly property real fullSize: mainPillSize + (totalSecPills > 0 ? pillSpacing + secPillSize * totalSecPills + pillSpacing * Math.max(0, totalSecPills - 1) : 0)
 
     implicitWidth: isVertical ? capsuleHeight : fullSize
     implicitHeight: isVertical ? fullSize : capsuleHeight
-
-    // Background Blocker
-    Rectangle {
-        anchors.fill: parent
-        radius: Style.radiusM
-        color: root.expanded ? Color.mSurface : "transparent"
-
-        Behavior on color { ColorAnimation { duration: 200 } }
-        z: -1
-    }
 
     Behavior on implicitWidth { NumberAnimation { duration: Style.animationNormal; easing.type: Easing.OutCubic } }
     Behavior on implicitHeight { NumberAnimation { duration: Style.animationNormal; easing.type: Easing.OutCubic } }
@@ -139,22 +148,35 @@ Item {
     // --- Components ---
 
     component MainButton: Rectangle {
-        width: root.pillSize
-        height: root.pillSize
-        radius: Style.radiusM
-        color: Color.mPrimary
+        id: mainBtn
+        implicitWidth: root.mainPillSize
+        implicitHeight: root.mainPillSize
+        radius: root.mainPillSize / 2 * root.borderRadius
+        color: {
+            if (mainBtnMouse.containsMouse) return root.priShowPill ? Color.mHover : Color.mTertiary;
+            if (!root.priShowPill) return "transparent";
+            return root.priPillColor === "none" ? Color.mPrimary : Color.resolveColorKey(root.priPillColor);
+        }
+
+        Behavior on color { ColorAnimation { duration: Style.animationFast } }
 
         NIcon {
             icon: root.mainIcon
-            pointSize: root.iconSize
+            pointSize: root.mainIconSize
             applyUiScale: false
-            color: Color.mOnPrimary
+            color: {
+                if (mainBtnMouse.containsMouse) return root.priShowPill ? Color.mOnHover : Color.mOnTertiary;
+                if (root.priSymbolColor !== "none") return Color.resolveColorKey(root.priSymbolColor);
+                return root.priShowPill ? (root.priPillColor === "none" ? Color.mOnPrimary : Color.resolveOnColorKey(root.priPillColor)) : Color.mOnSurface;
+            }
             anchors.centerIn: parent
         }
 
         MouseArea {
+            id: mainBtnMouse
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
+            hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: function (mouse) {
                 if (mouse.button === Qt.RightButton) {
@@ -166,7 +188,7 @@ Item {
                         Hyprland.dispatch("togglespecialworkspace");
                     }
                     root.manuallyExpanded = false;
-                } else if (root.hasActiveWorkspaces) {
+                } else {
                     root.manuallyExpanded = true;
                 }
             }
@@ -177,29 +199,45 @@ Item {
         id: wsPill
         required property var modelData
 
-        width: root.pillSize
-        height: root.pillSize
-        radius: Style.radiusM
-        color: Color.mPrimary
+        implicitWidth: root.secPillSize
+        implicitHeight: root.secPillSize
+        radius: root.secPillSize / 2 * root.borderRadius
+        color: {
+            if (wsPillMouse.containsMouse) return root.secShowPill ? Color.mHover : Color.mTertiary;
+            if (!root.secShowPill) return "transparent";
+            return root.secPillColor === "none" ? Color.mPrimary : Color.resolveColorKey(root.secPillColor);
+        }
 
         readonly property bool isActive: root.activeWorkspaceNames[modelData.name] === true
         readonly property bool isFocused: root.internalActiveSpecial === modelData.name
 
         opacity: isActive ? 1.0 : 0.2
-        border.color: isFocused ? Color.mOnPrimary : "transparent"
+        border.color: {
+            if (!isFocused) return "transparent";
+            if (root.focusBorderColor !== "none") return Color.resolveColorKey(root.focusBorderColor);
+            return root.secShowPill ? Color.mOnPrimary : Color.mPrimary;
+        }
         border.width: 2
+
+        Behavior on color { ColorAnimation { duration: Style.animationFast } }
 
         NIcon {
             icon: wsPill.modelData.icon
-            pointSize: root.iconSize
+            pointSize: root.secIconSize
             applyUiScale: false
-            color: Color.mOnPrimary
+            color: {
+                if (wsPillMouse.containsMouse) return root.secShowPill ? Color.mOnHover : Color.mOnTertiary;
+                if (root.secSymbolColor !== "none") return Color.resolveColorKey(root.secSymbolColor);
+                return root.secShowPill ? (root.secPillColor === "none" ? Color.mOnPrimary : Color.resolveOnColorKey(root.secPillColor)) : Color.mOnSurface;
+            }
             anchors.centerIn: parent
         }
 
         MouseArea {
+            id: wsPillMouse
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
+            hoverEnabled: true
             onClicked: {
                 Hyprland.dispatch(`togglespecialworkspace ${wsPill.modelData.shortName}`);
             }
@@ -234,31 +272,31 @@ Item {
 
     // --- Layouts ---
 
-    Row {
+    RowLayout {
         visible: !root.isVertical
         anchors.centerIn: parent
         spacing: root.pillSpacing
         layoutDirection: root.expandDirection === "left" ? Qt.RightToLeft : Qt.LeftToRight
-        MainButton {}
+        MainButton { Layout.alignment: Qt.AlignVCenter }
         Repeater {
             model: root.configuredWorkspaces
-            WorkspacePill { visible: root.expanded }
+            WorkspacePill { visible: root.expanded; Layout.alignment: Qt.AlignVCenter }
         }
     }
 
-    Column {
+    ColumnLayout {
         visible: root.isVertical
         anchors.centerIn: parent
         spacing: root.pillSpacing
 
         Repeater {
             model: root.configuredWorkspaces
-            WorkspacePill { visible: root.expanded && root.expandDirection === "up" }
+            WorkspacePill { visible: root.expanded && root.expandDirection === "up"; Layout.alignment: Qt.AlignHCenter }
         }
-        MainButton {}
+        MainButton { Layout.alignment: Qt.AlignHCenter }
         Repeater {
             model: root.configuredWorkspaces
-            WorkspacePill { visible: root.expanded && root.expandDirection === "down" }
+            WorkspacePill { visible: root.expanded && root.expandDirection === "down"; Layout.alignment: Qt.AlignHCenter }
         }
     }
 }

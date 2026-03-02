@@ -1,7 +1,7 @@
 {
   "id": "special-workspaces",
   "name": "Special Workspaces",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "minNoctaliaVersion": "4.5.0",
   "author": "Qholin",
   "license": "MIT",
@@ -19,6 +19,16 @@
     "defaultSettings": {
       "mainIcon": "layout-grid",
       "expandDirection": "down",
+      "primaryShowPill": false,
+      "primarySymbolColor": "none",
+      "primaryPillColor": "none",
+      "primarySize": 0.9,
+      "secondaryShowPill": true,
+      "secondarySymbolColor": "none",
+      "secondaryPillColor": "primary",
+      "secondarySize": 0.9,
+      "borderRadius": 1.0,
+      "focusBorderColor": "primary",
       "workspaces": [{ "name": "communication", "icon": "message" }]
     }
   }

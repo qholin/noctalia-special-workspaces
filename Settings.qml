@@ -14,6 +14,18 @@ ColumnLayout {
     property string mainIcon: cfg.mainIcon ?? defaults.mainIcon
     property string expandDirection: cfg.expandDirection ?? defaults.expandDirection
 
+    property bool primaryShowPill: cfg.primaryShowPill ?? defaults.primaryShowPill
+    property string primarySymbolColor: cfg.primarySymbolColor ?? defaults.primarySymbolColor
+    property string primaryPillColor: cfg.primaryPillColor ?? defaults.primaryPillColor
+    property real primarySize: cfg.primarySize ?? defaults.primarySize
+
+    property bool secondaryShowPill: cfg.secondaryShowPill ?? defaults.secondaryShowPill
+    property string secondarySymbolColor: cfg.secondarySymbolColor ?? defaults.secondarySymbolColor
+    property string secondaryPillColor: cfg.secondaryPillColor ?? defaults.secondaryPillColor
+    property real secondarySize: cfg.secondarySize ?? defaults.secondarySize
+    property real borderRadius: cfg.borderRadius ?? defaults.borderRadius
+    property string focusBorderColor: cfg.focusBorderColor ?? defaults.focusBorderColor
+
     // Local mutable copy for editing
     property var workspaces: []
     property int workspacesRevision: 0
@@ -51,6 +63,16 @@ ColumnLayout {
 
         pluginApi.pluginSettings.mainIcon = root.mainIcon;
         pluginApi.pluginSettings.expandDirection = root.expandDirection;
+        pluginApi.pluginSettings.primaryShowPill = root.primaryShowPill;
+        pluginApi.pluginSettings.primarySymbolColor = root.primarySymbolColor;
+        pluginApi.pluginSettings.primaryPillColor = root.primaryPillColor;
+        pluginApi.pluginSettings.primarySize = root.primarySize;
+        pluginApi.pluginSettings.secondaryShowPill = root.secondaryShowPill;
+        pluginApi.pluginSettings.secondarySymbolColor = root.secondarySymbolColor;
+        pluginApi.pluginSettings.secondaryPillColor = root.secondaryPillColor;
+        pluginApi.pluginSettings.secondarySize = root.secondarySize;
+        pluginApi.pluginSettings.borderRadius = root.borderRadius;
+        pluginApi.pluginSettings.focusBorderColor = root.focusBorderColor;
         pluginApi.pluginSettings.workspaces = valid;
         pluginApi.saveSettings();
         Logger.i("SpecialWorkspaces", "Settings saved");
@@ -123,6 +145,137 @@ ColumnLayout {
             root.expandDirection = key;
         }
         defaultValue: "down"
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginS
+
+        NLabel {
+            label: "Border Radius"
+            description: "Roundness of the buttons (" + Math.round(root.borderRadius * 100) + "%)."
+        }
+
+        NSlider {
+            Layout.fillWidth: true
+            from: 0
+            to: 1.0
+            stepSize: 0.05
+            value: root.borderRadius
+            onMoved: root.borderRadius = value
+        }
+    }
+
+    NColorChoice {
+        label: "Focus Border Color"
+        description: "Color of the border shown on the focused workspace."
+        currentKey: root.focusBorderColor
+        onSelected: key => { root.focusBorderColor = key; }
+        defaultValue: "none"
+    }
+
+    // --- Primary Button ---
+
+    NText {
+        text: "Primary Button"
+        pointSize: Style.fontSizeM
+        font.bold: true
+    }
+
+    NToggle {
+        label: "Show Pill"
+        description: "Show a colored circle behind the main button icon."
+        checked: root.primaryShowPill
+        onToggled: checked => { root.primaryShowPill = checked; }
+        defaultValue: true
+    }
+
+    NColorChoice {
+        label: "Symbol Color"
+        description: "Override the main button icon color."
+        currentKey: root.primarySymbolColor
+        onSelected: key => { root.primarySymbolColor = key; }
+        defaultValue: "none"
+    }
+
+    NColorChoice {
+        label: "Pill Color"
+        description: "Override the main button pill color."
+        currentKey: root.primaryPillColor
+        onSelected: key => { root.primaryPillColor = key; }
+        defaultValue: "none"
+        visible: root.primaryShowPill
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginS
+
+        NLabel {
+            label: "Size"
+            description: "Size of the main button (" + Math.round(root.primarySize * 100) + "%)."
+        }
+
+        NSlider {
+            Layout.fillWidth: true
+            from: 0.3
+            to: 1.0
+            stepSize: 0.05
+            value: root.primarySize
+            onMoved: root.primarySize = value
+        }
+    }
+
+    // --- Secondary Buttons ---
+
+    NText {
+        text: "Secondary Buttons"
+        pointSize: Style.fontSizeM
+        font.bold: true
+    }
+
+    NToggle {
+        label: "Show Pill"
+        description: "Show a colored circle behind each workspace icon."
+        checked: root.secondaryShowPill
+        onToggled: checked => { root.secondaryShowPill = checked; }
+        defaultValue: true
+    }
+
+    NColorChoice {
+        label: "Symbol Color"
+        description: "Override the workspace icon color."
+        currentKey: root.secondarySymbolColor
+        onSelected: key => { root.secondarySymbolColor = key; }
+        defaultValue: "none"
+    }
+
+    NColorChoice {
+        label: "Pill Color"
+        description: "Override the workspace pill color."
+        currentKey: root.secondaryPillColor
+        onSelected: key => { root.secondaryPillColor = key; }
+        defaultValue: "none"
+        visible: root.secondaryShowPill
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginS
+
+        NLabel {
+            label: "Size"
+            description: "Size of the workspace pills (" + Math.round(root.secondarySize * 100) + "%)."
+        }
+
+        NSlider {
+            Layout.fillWidth: true
+            from: 0.3
+            to: 1.0
+            stepSize: 0.05
+            value: root.secondarySize
+            onMoved: root.secondarySize = value
+        }
     }
 
     NDivider {
