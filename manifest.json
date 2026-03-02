@@ -2,12 +2,12 @@
   "id": "special-workspaces",
   "name": "Special Workspaces",
   "version": "1.0.0",
-  "minNoctaliaVersion": "4.5.0",
+  "minNoctaliaVersion": "4.4.0",
   "author": "Qholin",
   "license": "MIT",
-  "repository": "https://github.com/noctalia-dev/noctalia-plugins",
+  "repository": "https://github.com/qholin/noctalia-special-workspaces/",
   "description": "Configurable Hyprland special workspaces indicator for the bar.",
-  "tags": ["Bar", "Hyprland"],
+  "tags": ["Bar", "Productivity"],
   "entryPoints": {
     "barWidget": "BarWidget.qml",
     "settings": "Settings.qml"
